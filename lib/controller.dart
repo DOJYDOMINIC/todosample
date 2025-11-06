@@ -4,6 +4,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:todo/service.dart';
+import 'package:todo/shared.dart';
 import 'model.dart';
 
 class TodoController with ChangeNotifier {
@@ -20,6 +21,56 @@ class TodoController with ChangeNotifier {
   List<Todo> get todos => _todos;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  var switchObs = false;
+
+  void switchMode() {
+      switchObs = !switchObs;
+      notifyListeners();
+  }
+
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: 'https://dummyjson.com', // ✅ replace with your base URL
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ),
+  );
+
+  /// Login API
+  Future<void> login({required String username, required String password,}) async {
+    try {
+      final response = await _dio.post(
+        '/auth/login',
+        data: {
+          'username': username,
+          'password': password,
+          "expiresInMins" : 30
+        },
+      );
+      if (response.statusCode == 200) {
+        final token = response.data['accessToken'];
+        UserPreferences.setToken(token);
+        debugPrint('🎟 Token: ${UserPreferences.token}');
+
+      } else {
+        debugPrint('⚠️ Login failed with status: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        debugPrint('❌ API Error: ${e.response?.statusCode}');
+        debugPrint('🧾 Message: ${e.response?.data}');
+      } else {
+        debugPrint('🚫 Network Error: ${e.message}');
+      }
+    } catch (e) {
+      debugPrint('💥 Unexpected Error: $e');
+    }
+  }
 
   // Fetch todos
   Future<void> fetchTodos() async {

@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todo/screen.dart';
 import 'package:todo/service.dart';
+import 'package:todo/shared.dart';
 
 import 'controller.dart';
-void main() {
+import 'home.dart';
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await UserPreferences.init();
   runApp(
     ChangeNotifierProvider(
       create: (context) => TodoController(TodoApiService()),
@@ -24,7 +28,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         useMaterial3: true,
       ),
-      home: const TodoHomePage(),
+      home: UserPreferences.token.isNotEmpty ? Home() :  Login(),
     );
   }
 }
